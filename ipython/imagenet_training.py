@@ -33,15 +33,17 @@ LOG_DIR = "log/"
 num_epochs= 100
 
 
-DATA_MAIN_PATH = '/home/data/ilsvrc12-hkl/'
+DATA_MAIN_PATH = '/home/public/imagenet-hkl/'
 LABELS_PATH = DATA_MAIN_PATH+'labels/'
-TRAIN_FOLDER = 'train_hkl_b256_b_256/'
+# TRAIN_FOLDER = 'train_hkl_b256_b_256/'
+TRAIN_FOLDER = 'val_hkl_b256_b_256/'
 TEST_FOLDER = 'val_hkl_b256_b_256/'
 HKL_EMBED_FIGURE = 256
+LOAD_LENGTH=32
 TRAIN_PATH = DATA_MAIN_PATH + TRAIN_FOLDER
 TEST_PATH = DATA_MAIN_PATH + TEST_FOLDER
 
-GIT_DATA_PATH = '/home/yma/git/data/'
+GIT_DATA_PATH = '/home/lab.analytics.northwestern.edu/yma/git/data/'
 
 
 # In[21]:
@@ -67,27 +69,41 @@ def imagenet_loader(set_type):
     elif set_type == 'test' or set_type == 'val':
         HKL_PATH = TEST_PATH
         label = np.load(LABELS_PATH+'val_labels.npy')
-        
+
+    start = HKL_EMBED_FIGURE
+    length = LOAD_LENGTH
+    end = HKL_EMBED_FIGURE
+
     while True:
-        for root, dirs, files in os.walk(HKL_PATH):
-            for file in files:
-                if file.endswith(".hkl"):
-                    file_path = os.path.join(root, file)
-                    print("Extracting a batch from: %s"%file_path)
-                    hkl_file = hkl.load(file_path)
-                    X = np.swapaxes(hkl_file,0,3)
-                    if X.shape[1]==256 and X.shape[2]==256:
-                        X = X[::,16:240, 16:240, ::]
 
-                    numbers = [int(s) for s in file.split('.') if s.isdigit()]
-                    batch_index = numbers[0]
-                    label_start = batch_index * HKL_EMBED_FIGURE
-                    label_end   = label_start + HKL_EMBED_FIGURE
-                    
-                    y_class = label[label_start:label_end]
-                    y= class_to_array(y_class)
+        if start == end:
 
-                    yield (X, y)
+            for root, dirs, files in os.walk(HKL_PATH):
+                for file in files:
+                    if file.endswith(".hkl"):
+                        file_path = os.path.join(root, file)
+                        # print("Extracting a batch from: %s, for %s"%(file_path, set_type))
+                        print("Batch: %s, for %s"%(file, set_type))
+                        hkl_file = hkl.load(file_path)
+                        X = np.swapaxes(hkl_file,0,3)
+                        if X.shape[1]==256 and X.shape[2]==256:
+                            X = X[::,16:240, 16:240, ::]
+
+                        numbers = [int(s) for s in file.split('.') if s.isdigit()]
+                        batch_index = numbers[0]
+                        label_start = batch_index * HKL_EMBED_FIGURE
+                        label_end   = label_start + HKL_EMBED_FIGURE
+                        
+                        y_class = label[label_start:label_end]
+                        y= class_to_array(y_class)
+
+                        # print(X.shape)
+
+                        start = 0
+                        yield (X[start:start+LOAD_LENGTH], y[start:start+LOAD_LENGTH])
+        else:
+            start = start+LOAD_LENGTH
+            yield (X[start-LOAD_LENGTH:start], y[start-LOAD_LENGTH:start])
 
 
 # In[22]:
@@ -135,7 +151,7 @@ model.fit_generator(
         imagenet_loader('train'),
         steps_per_epoch=100,
         validation_data=imagenet_loader('val'),
-        validation_steps=10,
+        validation_steps=2,
         epochs=num_epochs,
         callbacks=callbacks)
 

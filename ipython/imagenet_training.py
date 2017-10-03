@@ -33,7 +33,7 @@ LOG_DIR = "log/"
 num_epochs= 100
 
 
-DATA_MAIN_PATH = '/home/public/imagenet-hkl/'
+DATA_MAIN_PATH = '/mnt/imagenet-hkl/'
 LABELS_PATH = DATA_MAIN_PATH+'labels/'
 # TRAIN_FOLDER = 'train_hkl_b256_b_256/'
 TRAIN_FOLDER = 'val_hkl_b256_b_256/'
@@ -43,7 +43,8 @@ LOAD_LENGTH=32
 TRAIN_PATH = DATA_MAIN_PATH + TRAIN_FOLDER
 TEST_PATH = DATA_MAIN_PATH + TEST_FOLDER
 
-GIT_DATA_PATH = '/home/lab.analytics.northwestern.edu/yma/git/data/'
+# GIT_DATA_PATH = '/home/lab.analytics.northwestern.edu/yma/git/data/'
+GIT_DATA_PATH = '../../git/data/'
 
 
 # In[21]:
